@@ -1,0 +1,230 @@
+---
+title: "Untitled"
+output: html_document
+date: '2022-08-04'
+---
+
+```{r set directory }
+dir <- ("C:/Users/torriw/Desktop/pca_snps/")
+home<-setwd(dir)
+
+```
+
+```{r import neuro file}
+behavior_subset<-read.csv("C:/Users/torriw/Desktop/pca_snps/behavior_subset.csv")
+```
+
+```{r scale & produce pca}
+
+library(FactoMineR)
+library(mice)
+
+
+# Find some method for scaling <- this is necessary for PCA
+# pmm is an imputation method 'predictive mean matching'
+behavior_subset_mice<-mice(behavior_subset, method = "pmm")
+
+# after imputing, class 'mids' is created, have to use complete() to create a df out of data
+behavior_subset_complete<-complete(behavior_subset_mice,1)
+
+# scale and center data set
+behavior_subset_scale <- scale(behavior_subset_complete, scale = TRUE, center = TRUE )
+
+# try graphing pca plot
+pca<-PCA(behavior_subset_scale, scale.unit = FALSE, ncp = 5, graph = TRUE) 
+
+```
+
+```{r scree plot & contributions }
+
+library(factoextra)
+eig<-get_eigenvalue(pca)
+scree_plot<-fviz_eig(pca,addlabels = TRUE, ylim= c(0,40))
+
+# extract results for variables
+var<-get_pca_var(pca)
+
+# contribution of each variable 
+contribution<-var$contrib
+
+# contributions of variables in PC1 and PC2
+# The red dashed line on the graph above indicates the expected average contribution. For a certain component, a variable with a contribution exceeding this benchmark is considered as important in contributing to the component
+
+pc1_contrib10<-fviz_contrib(pca,choice = "var", axes = 1, top = 10)
+pc2_contrib10<-fviz_contrib(pca,choice = "var", axes = 2, top = 10)
+
+library(gridExtra) ## Used to arrange multiple ggplots
+pc1_contrib<-fviz_contrib(pca,choice = "var", axes = 1, top = 5)
+pc2_contrib<-fviz_contrib(pca,choice = "var", axes = 2, top = 5)
+pc3_contrib<-fviz_contrib(pca,choice = "var", axes = 3, top = 5)
+pc4_contrib<-fviz_contrib(pca,choice = "var", axes = 4, top = 5)
+grid<-grid.arrange(pc1_contrib,pc2_contrib,pc3_contrib,pc4_contrib, nrow = 2)
+
+#save file
+pdf("grid.pdf", width = 8, height = 12) # Open a new pdf file
+grid.arrange(pc1_contrib,pc2_contrib,pc3_contrib,pc4_contrib, nrow=3) # Write the grid.arrange in the file
+dev.off() # Close the file
+```
+
+
+```{r }
+# biplot of individuals and vairables
+# The red arrows depict the loadings of each variable
+pca_biplot<-fviz_pca_biplot(pca, repel = TRUE,col.var = "black",col.ind = "white",legend = 0,title = "Principal Component Analysis", subtitle = "LoadingS Plot")
+
+# fviz_pca_biplot(pca, repel = TRUE,col.ind = as.factor(behavior_covariates$FASStatus),legend = 0,title = "Principal Component Analysis - Biplot with Neurobehavioral Measurements",select.var = list(name = names(covariates),cos2 = NULL,contrib = c(5)),labelsize = 6, pointsize = 1.5, arrowsize = 0.5)
+
+# add rownames of covariates to scaled data
+rownames(behavior_subset_scale)<-c('CCA106','CCA107','CCA108','CCA111','CCA112','CCA116','CCA117','CCA133','CCA135','CCA137','CCA138','CCA145','CCA147','CCA148','CCA149','CCA150','CCA153','CCA154','CCA157','CCA160','CCA161','CCA162','CCA166','CCA167','CCA168','CCA169','CCA170','CCA171','CCA173','CCA174','CCA175','CCA176','CCA180','CCA182','CCA185','CCA186','CCA196','CCA202','CCA236','CCA237','CCA238','CCA239','CCA240','CCA242','CCA246','CCA250','CCA255','CCA256','CCA258','CCA259','CCA262','CCA265','CCA267','CCA268','CCA270','CCA271','ClCA275','CCA277','CCA302','CCA303','CCA306','CCA308','CCA309','CCA310','CCA311','CCA312','CCA313','CCA317','CCA319','CCA320','CCA321','CCA323','CCA324','CCA325','CCA328','CCA332','CCA333','JWM3324','JWM3442','JWM3583','JWM6201','JWM6204','JWM6206','JWM6208','JWM6209','JWM6234','JWM6236','JWM6238','JWM6240','JWM6241','JWM6242','JWM6243','JWM6248','JWM6249','JWM6251','JWM6255','JWM6257','JWM6266','JWM6267','JWM6270','JWM6285','JWM6286','JWM6301','JWM6314','JWM6332','JWM6337','JWM6343','JWM6344','JWM6346','JWM6348','JWM6350','JWM6353','JWM6354','JWM6375','JWM6380','JWM6400','JWM6405','JWM6410','JWM6414','JWM6415','JWM6431','JWM6494','JWM6495','JWM6500','JWM6503','JWM6513','JWM6525','JWM6527','JWM6534','JWM6535','JWM6547','JWM6553','JWM6556','JWM6566','JWM6578','JWM6579','JWM6621','JWM6649','JWM6652','JWM6654','JWM6665','JWM6670','JWM6676','JWM6679','JWM6681','JWM6682','JWM6686','JWM6688','JWM6691','JWM6718','JWM6719','JWM6790','SMS101','SMS110','SMS113','SMS121','SMS124','SMS130','SMS133','SMS136','SMS140','SMS145','SMS148','SMS150','SMS151','SMS156','SMS157','SMS159','SMS161','SMS163','SMS165','SMS172','SMS180','SMS183','SMS184','SMS187','SMS189','SMS193','SMS195','SMS196','SMS199','SMS209','SMS224','SMS228','SMS235','SMS245','SMS246','SMS249','SMS251','SMS252','SMS255','SMS264','SMS267','SMS274','SMS275','SMS276','SMS290','SMS291','SMS292','SMS293','SMS294','SMS295','SMS298','SMS300','SMS307','SMS308','SMS310','SMS311','SMS314','SMS317','SMS322','SMS323','SMS325','SMS326','SMS327','SMS328','SMS329','SMS332','SMS334','SMS335','SMS343','SMS346','SMS348','SMS349','CCA209','JWM1044','JWM1054','SMS115','SMS119','SMS123','SMS128','SMS137','SMS139','SMS142','SMS146','SMS154','SMS155','SMS158','SMS168','SMS170','SMS176','SMS178','SMS179','SMS186','SMS203','SMS212','SMS221','SMS227','SMS229','SMS238','SMS239','SMS240','SMS241','SMS244','SMS247','SMS265','SMS277','SMS279','SMS282','SMS283')
+
+
+#cluster individuals 
+#first find optimal number of clusters
+optimal_clust<-fviz_nbclust(behavior_subset_scale, kmeans, method = "wss") +geom_vline(xintercept = 3, linetype = 2)
+
+# 3 clusters are optimal
+kmeans_clust<-kmeans(behavior_subset_scale,3,nstart = 10)
+cluster_plot<-fviz_cluster(kmeans_clust,behavior_subset_scale,ellipse.type = "norm", main = "K-Means Cluster",scale.unit = FALSE,geom = "point")
+
+#transposed data based on behavior
+t_cluster<-t(behavior_subset_scale)
+optimal_clust_t<-fviz_nbclust(t_cluster, kmeans, method = "wss") +geom_vline(xintercept = 3, linetype = 2)
+kmeans_clust_t<-kmeans(t_cluster,3,nstart = 10)
+cluster_plot_t<-fviz_cluster(kmeans_clust_t,t_cluster,ellipse.type = "norm", main = "K-Means Cluster",scale.unit = FALSE,geom = "point")
+cluster_added<-cbind(t_cluster, cluster =kmeans_clust_t$cluster)
+
+```
+
+```{r }
+# overlay covariates 
+covariates<-read.csv("C:/Users/torriw/Desktop/pca_snps/cov_generated.csv")
+behavior_covariates<-cbind(behavior_subset_scale,covariates)
+covar_pca<-PCA(behavior_covariates[,0:57], graph = FALSE)
+
+#t_behavior_covariates<-t(behavior_covariates)
+#t<-as.numeric(as.character(colnames(t_behavior_covariates)))
+#colnames(t_behavior_covariates)<-t
+#t_covar_pca<-PCA(t_behavior_covariates[0:57,], graph = FALSE)
+
+
+# color individuals by group 
+sex_elipses<-fviz_pca_ind(covar_pca, geom.ind = "point", col.ind = factor(behavior_covariates$sex), palette = c("#00AFBB", "#E7B800"),addEllipses = TRUE, legend.title = "Sex",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+age_elipses<-fviz_pca_ind(covar_pca, geom.ind = "point", col.ind = factor(behavior_covariates$age_np), addEllipses = TRUE,ellipse.level=0.95, legend.title = "Age",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+race_elipses<-fviz_pca_ind(covar_pca, geom.ind = "point", col.ind = factor(behavior_covariates$Race), addEllipses = TRUE, legend.title = "Race",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+fasstatus_elipses<-fviz_pca_ind(covar_pca, geom.ind = "point", col.ind = factor(behavior_covariates$FASStatus), addEllipses = TRUE,ellipse.level=0.95, legend.title = "FASStatus",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE) 
+
+```
+
+```{r }
+#cov overlay of Dx with new df
+install.packages("qpcR")                          
+library("qpcR")   
+dx<-read.csv("C:/Users/torriw/Desktop/pca_snps/dx.csv")
+dx_over<-qpcR:::cbind.na(dx,behavior_covariates)
+dx_over_na<-na.omit(dx_over)
+dx_pca<-PCA(dx_over_na[,2:57], graph = FALSE)
+
+dx_elipses<-fviz_pca_ind(dx_pca, geom.ind = "point", col.ind = factor(dx_over_na$Dx), addEllipses = TRUE,ellipse.level=0.95, legend.title = "Dx",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+```
+
+
+```{r }
+# output plots into tiffs
+tiff(filename = "scree_plot.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+scree_plot + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "pca_biplot.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+pca_biplot + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "cluster_plot.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+cluster_plot + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+
+tiff(filename = "age_elipses.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+age_elipses + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "sex_elipses.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+sex_elipses + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "race_elipses.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+race_elipses + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "fasstatus_elipses.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+fasstatus_elipses + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "dx_elipses.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+dx_elipses + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "pc1_contrib.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+pc1_contrib10 + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+tiff(filename = "pc2_contrib.tif", width = 10, height = 10, units = "in", compression = "lzw", res = 600)
+pc2_contrib10 + theme(text = element_text(size=18), axis.text = element_text(size = 18),axis.text.y.left=element_text(size = 18, face = "bold"), axis.text.x.bottom=element_text(size = 18, face = "bold")) + scale_color_brewer(palette="Set1")
+dev.off()
+
+```
+
+
+```{r }
+#Genotype PCA#
+
+genotype_data_raw<- read.csv("C:/Users/torriw/Desktop/snp_genome/all_samples.csv")
+genotype_data_scale <- scale(genotype_data_raw, scale = TRUE, center = TRUE )
+pca_genotype<-PCA(genotype_data_scale, scale.unit = FALSE, ncp = 5, graph = TRUE)
+
+geno_eig<-get_eigenvalue(pca_genotype)
+geno_scree_plot<-fviz_eig(pca_genotype,addlabels = TRUE, ylim= c(0,30))
+
+#Removing outlier samples
+samples_removed<-read.csv("C:/Users/torriw/Desktop/snp_genome/removed_samples.csv")
+samples_removed_scale<- scale(samples_removed, scale = TRUE, center = TRUE )
+pca_removed<-PCA(samples_removed_scale, scale.unit = FALSE, ncp = 5, graph = TRUE)
+
+geno_pca_biplot<-fviz_pca_biplot(pca_genotype, repel = TRUE,col.var = "black",col.ind = "red",legend = 0,title = "Principal Component Analysis", subtitle = "Loading Plot")
+rm_pca_biplot<-fviz_pca_biplot(pca_removed, repel = TRUE,col.var = "black",col.ind = "red",legend = 0,title = "Principal Component Analysis", subtitle = "Loading Plot")
+```
+
+
+```{r }
+#Covariate overlay 
+genotype_covariates<-cbind(genotype_data_scale,covariates)
+genotype_covar_pca<-PCA(genotype_covariates[,0:104], graph = FALSE)
+
+# color individuals by group 
+geno_sex_elipses<-fviz_pca_ind(genotype_covar_pca, geom.ind = "point", col.ind = factor(genotype_covariates$sex), palette = c("#00AFBB", "#E7B800"),addEllipses = TRUE, legend.title = "Sex",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+geno_age_elipses<-fviz_pca_ind(genotype_covar_pca, geom.ind = "point", col.ind = factor(genotype_covariates$age_np), addEllipses = TRUE,ellipse.level=0.95, legend.title = "Age",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+geno_race_elipses<-fviz_pca_ind(genotype_covar_pca, geom.ind = "point", col.ind = factor(genotype_covariates$Race), addEllipses = TRUE, legend.title = "Race",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE)
+geno_fasstatus_elipses<-fviz_pca_ind(genotype_covar_pca, geom.ind = "point", col.ind = factor(genotype_covariates$FASStatus), addEllipses = TRUE,ellipse.level=0.95, legend.title = "FASStatus",title = "Principal Component Analysis", subtitle = "Covariate overlay",mean.point = FALSE) 
+
+
+#removed covariate overlay
+rm_covars<- read.csv("C:/Users/torriw/Desktop/snp_genome/removed_covar.csv")
+rm_genotype_covariates<-cbind(samples_removed_scale,rm_covars)
+rm_genotype_covar_pca<-PCA(rm_genotype_covariates[,0:98], graph = FALSE)
+rm_race_match<-fviz_pca_ind(rm_genotype_covar_pca,geom.ind = "point", col.ind = factor(rm_genotype_covariates$Race))
+
+#Covariate color match
+race_match<-fviz_pca_ind(genotype_covar_pca,geom.ind = "point", col.ind = factor(genotype_covariates$Race  ))
+fasstatus_match<-fviz_pca_ind(genotype_covar_pca,geom.ind = "point", col.ind = factor(genotype_covariates$FASStatus))
+```
+
+
+```{r }
+geno_var<-get_pca_var(genotype_covar_pca)
+geno_pc1_contrib<-fviz_contrib(pca_genotype,choice = "var", axes = 1, top = 5)
+
+
+
+
+
+
+```
